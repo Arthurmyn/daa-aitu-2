@@ -2,51 +2,60 @@ package algorithm;
 
 import metrics.PerformanceTracker;
 import org.junit.jupiter.api.Test;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.util.Arrays;
+
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 public class ShellSortTest {
+    private static final String CSV = "target/metrics.csv";
 
-    @Test
-    void testSmallArray() {
-        int[] arr = {5, 2, 9, 1, 5, 6};
-        int[] expected = {1, 2, 5, 5, 6, 9};
+    private void runCase(String label, int[] arr) throws Exception {
+        int[] expected = arr.clone();
+        Arrays.sort(expected);
 
         PerformanceTracker tracker = new PerformanceTracker();
+        long start = System.nanoTime();
         ShellSort.sort(arr, tracker);
+        long timeNs = System.nanoTime() - start;
 
         assertArrayEquals(expected, arr);
+
+        File file = new File(CSV);
+        if (!file.getParentFile().exists()) file.getParentFile().mkdirs();
+        boolean newFile = !file.exists();
+
+        try (PrintWriter out = new PrintWriter(new FileWriter(file, true))) {
+            if (newFile) out.println("algorithm,time_ns,comparisons,allocations,maxDepth");
+            out.printf("%s,%d,%d,%d,%d%n",
+                    label,
+                    timeNs,
+                    tracker.getComparisons(),
+                    tracker.getSwapsOrAllocations(),
+                    tracker.getDeepestRecursion());
+        }
     }
 
     @Test
-    void testAlreadySorted() {
-        int[] arr = {1, 2, 3, 4, 5};
-        int[] expected = {1, 2, 3, 4, 5};
-
-        PerformanceTracker tracker = new PerformanceTracker();
-        ShellSort.sort(arr, tracker);
-
-        assertArrayEquals(expected, arr);
+    void testSmall() throws Exception {
+        runCase("ShellSort_small", new int[]{5, 2, 9, 1, 5, 6});
     }
 
     @Test
-    void testReversedArray() {
-        int[] arr = {5, 4, 3, 2, 1};
-        int[] expected = {1, 2, 3, 4, 5};
-
-        PerformanceTracker tracker = new PerformanceTracker();
-        ShellSort.sort(arr, tracker);
-
-        assertArrayEquals(expected, arr);
+    void testSorted() throws Exception {
+        runCase("ShellSort_sorted", new int[]{1, 2, 3, 4, 5});
     }
 
     @Test
-    void testEmptyArray() {
-        int[] arr = {};
-        int[] expected = {};
+    void testReversed() throws Exception {
+        runCase("ShellSort_reversed", new int[]{5, 4, 3, 2, 1});
+    }
 
-        PerformanceTracker tracker = new PerformanceTracker();
-        ShellSort.sort(arr, tracker);
-
-        assertArrayEquals(expected, arr);
+    @Test
+    void testEmpty() throws Exception {
+        runCase("ShellSort_empty", new int[]{});
     }
 }
