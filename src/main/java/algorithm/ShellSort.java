@@ -4,6 +4,10 @@ import metrics.PerformanceTracker;
 
 public class ShellSort {
     public static void sort(int[] arr, PerformanceTracker tracker) {
+        if (arr == null || arr.length <= 1) {
+            return;
+        }
+
         int n = arr.length;
         long startTime = System.nanoTime();
 
@@ -15,32 +19,30 @@ public class ShellSort {
         while (gap >= 1) {
             for (int i = gap; i < n; i++) {
                 int temp = arr[i];
-                tracker.countSwapOrAllocation(); // read element
+                tracker.countSwapOrAllocation();
                 int j = i;
 
-                // Gapped insertion sort
                 while (j >= gap) {
                     tracker.countComparison();
 
                     if (arr[j - gap] > temp) {
                         arr[j] = arr[j - gap];
                         j -= gap;
-                        tracker.countSwapOrAllocation(); // move element
+                        tracker.countSwapOrAllocation();
                     } else {
                         break;
                     }
                 }
 
                 arr[j] = temp;
-                tracker.countSwapOrAllocation(); // write back
+                tracker.countSwapOrAllocation();
             }
-            gap /= 3; // reduce the gap
+            gap /= 3;
         }
 
         long endTime = System.nanoTime();
         long elapsedTime = endTime - startTime;
 
-        // ---------- Save metrics ----------
         try {
             tracker.exportToCSV(elapsedTime / 1_000_000, "ShellSort_Knuth");
         } catch (Exception e) {
